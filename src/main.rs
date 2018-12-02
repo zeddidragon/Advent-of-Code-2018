@@ -1,4 +1,5 @@
 mod day01;
+mod day02;
 
 struct Advent {
     day: i8
@@ -15,6 +16,9 @@ fn main() {
 
     next(&mut day);
     day01::run();
+
+    next(&mut day);
+    day02::run();
 
     next(&mut day);
     println!("-- Not until tomorrow! --");
