@@ -45,72 +45,52 @@ const SHIFT : &str = r"Guard #(\d{1,4}) begins shift$";
 const SLEEP : &str = "falls asleep";
 const WAKE : &str = "wakes up";
 
-fn part1(entries: &Vec<Entry>) {
-    let mut slept_at = 0;
-    let mut current_guard = 0;
-    let mut guard_sleep_times = HashMap::new();
-    for entry in entries {
-        match entry.guard {
-            -1 => {
-                slept_at = entry.minute as u32;
-            },
-            0 => {
-                let time = guard_sleep_times.entry(current_guard).or_insert(0);
-                *time += entry.minute as u32 - slept_at;
-            },
-            _ => {
-                current_guard = entry.guard;
-            }
-        }
-    }
-
+fn part1(guard_minutes: &HashMap<i16, [i16; 60]>) {
     let mut sleepiest_guard = 0;
-    let mut longest_sleep = 0;
-    for (guard, sleep_time) in guard_sleep_times {
-        if sleep_time > longest_sleep {
-            sleepiest_guard = guard;
-            longest_sleep = sleep_time;
+    let mut sleep_record = 0;
+
+    for (guard, minutes) in guard_minutes {
+        let mut total = 0;
+        for minute in minutes.iter() {
+            total += minute;
         }
-    }
-
-    let mut sleep_minutes = [0; 60];
-
-    for entry in entries {
-        match entry.guard {
-            -1 => {
-                slept_at = entry.minute as u32;
-            },
-            0 => {
-                if current_guard != sleepiest_guard {
-                    continue;
-                }
-
-                for i in slept_at..(entry.minute as u32) {
-                    sleep_minutes[i as usize] += 1;
-                }
-            },
-            _ => {
-                current_guard = entry.guard;
-            }
+        if total > sleep_record {
+            sleepiest_guard = *guard;
+            sleep_record = total;
         }
     }
 
     let mut sleepiest_minute = 0;
-    let mut highest_frequency : u32 = 0;
-
-    for (minute, frequency) in sleep_minutes.iter().enumerate() {
-        if *frequency > highest_frequency {
+    let mut frequency_record = 0;
+    for (minute, frequency) in guard_minutes[&sleepiest_guard].iter().enumerate() {
+        if *frequency > frequency_record {
             sleepiest_minute = minute;
-            highest_frequency = *frequency;
+            frequency_record = *frequency;
         }
     }
 
-    println!("Sleepiest guard: #{} ({} minutes)", sleepiest_guard, longest_sleep);
-    println!("Sleepiest minute: #{} ({} nights)", sleepiest_minute, highest_frequency);
+    println!("Sleepiest guard: #{} ({} minutes)", sleepiest_guard, sleep_record);
+    println!("Sleepiest minute: {}m ({} nights)", sleepiest_minute, frequency_record);
     println!("Checksum: {}", (sleepiest_guard as usize) * sleepiest_minute);
 }
 
-fn part2(shifts: &Vec<Entry>) {
+fn part2(guard_minutes: &HashMap<i16, [i16; 60]>) {
+    let mut most_habitual = 0;
+    let mut habit_record = 0;
+    let mut habit_minute = 0;
+
+    for (guard, minutes) in guard_minutes {
+        for (minute, frequency) in minutes.iter().enumerate() {
+            if *frequency > habit_record {
+                most_habitual = *guard;
+                habit_record = *frequency;
+                habit_minute = minute;
+            }
+        }
+    }
+
+    println!("Most habitual: #{} ({}m, {} nights)", most_habitual, habit_minute, habit_record);
+    println!("Checksum: {}", (most_habitual as usize) * habit_minute);
 }
 
 fn to_entries(input: BufReader<File>) -> Vec<Entry> {
@@ -147,14 +127,40 @@ fn to_entries(input: BufReader<File>) -> Vec<Entry> {
         .collect();
 }
 
+fn to_sleep_minutes(entries: Vec<Entry>) -> HashMap<i16, [i16; 60]> {
+    let mut slept_at = 0;
+    let mut current_guard = 0;
+    let mut sleep_minutes = HashMap::new();
+    for entry in entries {
+        match entry.guard {
+            -1 => {
+                slept_at = entry.minute as u32;
+            },
+            0 => {
+                let minutes = sleep_minutes.entry(current_guard).or_insert([0; 60]);
+                for i in slept_at..(entry.minute as u32) {
+                    minutes[i as usize] += 1;
+                }
+            },
+            _ => {
+                current_guard = entry.guard;
+            }
+        }
+    }
+
+    return sleep_minutes;
+}
+
 pub fn run() {
     let file =  File::open("./input/day04.txt").expect("File not found");
     let input = BufReader::new(file);
     let mut entries = to_entries(input);
     entries.sort_unstable_by(|a, b| a.sortable().cmp(&b.sortable()));
 
+    let guard_minutes = to_sleep_minutes(entries);
+
     println!("- Part 1 -");
-    part1(&entries);
+    part1(&guard_minutes);
     println!("- Part 2 -");
-    part2(&entries);
+    part2(&guard_minutes);
 }
