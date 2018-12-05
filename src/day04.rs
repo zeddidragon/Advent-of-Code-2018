@@ -22,22 +22,6 @@ impl Entry {
             (self.month as u64) * 60 * 24 * 31 +
             (self.year as u64 - 1500) * 60 * 24 * 31 * 366;
     }
-
-    fn to_string(&self) -> String {
-        return format!(
-            "[{}-{:02}-{:02} {:02}-{:02}] {}",
-            self.year,
-            self.month,
-            self.day,
-            self.hour,
-            self.minute,
-            match self.guard {
-                -1 => format!("falls asleep"),
-                0 => format!("wakes up"),
-                _ => format!("Guard #{} begins shift", self.guard),
-            }
-        )
-    }
 }
 
 const TIME : &str = r"^\[(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})";
