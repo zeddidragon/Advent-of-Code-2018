@@ -4,10 +4,33 @@ use std::io::{BufReader, BufRead};
 use std::fs::File;
 use std::collections::{HashMap, HashSet};
 
+type Deps = HashMap<char, String>;
 struct Graph {
     steps: HashSet<char>,
-    requires: HashMap<char, String>,
-    required: HashMap<char, String>,
+    requires: Deps,
+    required: Deps,
+}
+
+fn fulfill(required: &mut Deps, requires: &mut Deps, step: char) {
+    for c in required.entry(step).or_insert(String::new()).chars() {
+        let mut length = None;
+        requires
+            .entry(c)
+            .and_modify(|entry| {
+                match entry.find(step) {
+                    Some(index) => {
+                        entry.remove(index);
+                        length = Some(entry.len());
+                    },
+                    _ => (),
+                }
+            });
+
+        match length {
+            Some(0) => { requires.remove(&c); },
+            _ => (),
+        }
+    }
 }
 
 fn part1(graph: &Graph) {
@@ -28,21 +51,8 @@ fn part1(graph: &Graph) {
 
         available.sort();
         let step = available[0];
+        fulfill(&mut required, &mut requires, step);
         
-        for c in required.entry(step).or_insert(String::new()).chars() {
-            let length;
-            {
-                let mut entry = requires.entry(c).or_insert(String::new());
-                let index = entry.find(step).unwrap();
-                entry.remove(index);
-                length = entry.len();
-            }
-
-            if length == 0 {
-                requires.remove(&c);
-            }
-        }
-
         order.push(step);
     }
 
@@ -50,6 +60,67 @@ fn part1(graph: &Graph) {
 }
 
 fn part2(graph: &Graph) {
+    let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let mut taken = HashSet::new();
+    let mut done = String::with_capacity(26);
+    let mut available = Vec::with_capacity(26);
+    let mut required = graph.required.clone();
+    let mut requires = graph.requires.clone();
+    let mut workers = 5;
+    let mut tasks = Vec::new();
+    let mut time = 0;
+
+    while done.len() < graph.steps.len() {
+        available.clear();
+
+        for step in graph.steps.iter() {
+            if taken.contains(step) {
+                continue;
+            }
+            if done.find(*step) != None {
+                continue;
+            }
+            if requires.contains_key(&step) {
+                continue;
+            }
+            available.push(*step);
+        }
+
+
+        available.sort();
+
+        for step in available.iter().take(workers) {
+            let duration = 61 + alphabet.find(*step).unwrap();
+            tasks.push((*step, duration));
+            taken.insert(*step);
+            workers -= 1;
+        }
+
+        let mut min = 100;
+        for (_, duration) in tasks.iter() {
+            if *duration < min {
+                min = *duration;
+            }
+        }
+
+        time += min;
+        tasks.retain(|(step, duration)| {
+            if *duration > min {
+                true
+            } else {
+                workers += 1;
+                done.push(*step);
+                fulfill(&mut required, &mut requires, *step);
+                false
+            }
+        });
+        tasks = tasks
+            .iter()
+            .map(|(step, duration)| (*step, duration - min))
+            .collect();
+    }
+
+    println!("Order: {} ({}s)", done, time);
 }
 
 pub fn run() {
