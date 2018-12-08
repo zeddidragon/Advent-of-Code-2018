@@ -1,4 +1,3 @@
-/*
 mod day01;
 mod day02;
 mod day03;
@@ -6,7 +5,6 @@ mod day04;
 mod day05;
 mod day06;
 mod day07;
-*/
 mod day08;
 
 struct Advent {
@@ -22,7 +20,6 @@ fn main() {
     let mut day = Advent { day: 0 };
     println!("## Advent of Code 2018 ##");
 
-    /*
     next(&mut day);
     day01::run();
 
@@ -43,7 +40,9 @@ fn main() {
 
     next(&mut day);
     day07::run();
-    */
+
+    next(&mut day);
+    day08::run();
 
     next(&mut day);
     day08::run();
