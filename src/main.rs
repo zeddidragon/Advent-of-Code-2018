@@ -1,3 +1,4 @@
+mod particle;
 mod day01;
 mod day02;
 mod day03;
@@ -7,6 +8,7 @@ mod day06;
 mod day07;
 mod day08;
 mod day09;
+mod day10;
 
 struct Advent {
     day: i8
@@ -47,6 +49,9 @@ fn main() {
 
     next(&mut day);
     day09::run();
+
+    next(&mut day);
+    day10::run();
 
     next(&mut day);
     println!("-- Not until tomorrow! --");
