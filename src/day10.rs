@@ -10,7 +10,7 @@ fn bounds(particles: &Vec<Particle>) -> (Point, Point) {
     let mut min_y = std::i32::MAX;
     let mut max_y = std::i32::MIN;
 
-    for mut p in particles.iter() {
+    for p in particles.iter() {
         let x = p.pos.x;
         let y = p.pos.y;
 
@@ -42,7 +42,7 @@ fn part1(particles: &mut Vec<Particle>) -> u32 {
     let mut height = std::i32::MAX;
     let mut seconds = 0;
     loop {
-        for mut p in particles.iter_mut() {
+        for p in particles.iter_mut() {
             p.pos += p.vel;
         }
 
@@ -54,13 +54,13 @@ fn part1(particles: &mut Vec<Particle>) -> u32 {
             continue;
         }
 
-        for mut p in particles.iter_mut() {
+        for p in particles.iter_mut() {
             p.pos -= p.vel;
         }
         
         let (min, max) = bounds(&particles);
 
-        for mut p in particles.iter_mut() {
+        for p in particles.iter_mut() {
             p.pos -= min;
         }
 
