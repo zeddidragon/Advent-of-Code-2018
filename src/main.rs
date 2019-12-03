@@ -12,6 +12,7 @@ mod day10;
 mod day11;
 mod day12;
 mod day13;
+mod day14;
 
 struct Advent {
     day: i8,
@@ -51,4 +52,5 @@ fn main() {
     next(&mut day, &day11::run);
     next(&mut day, &day12::run);
     next(&mut day, &day13::run);
+    next(&mut day, &day14::run);
 }
