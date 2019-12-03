@@ -14,9 +14,15 @@ fn part1(grid: &Vec<Vec<char>>, mut carts: &mut Vec<Cart>) {
     }
 }
 
+fn part2(grid: &Vec<Vec<char>>, mut carts: &mut Vec<Cart>) {
+    while carts.len() > 2 {
+        step(&grid, &mut carts);
+    }
+    println!("Final cart ends up at: ({}, {})", carts[0].x, carts[0].y);
+}
+
 #[derive(PartialEq, PartialOrd, Eq)]
 struct Cart {
-    id: usize,
     x: usize,
     y: usize,
     dir: char,
@@ -34,32 +40,31 @@ impl Cart {
         }
     }
 
+    fn collides(&self, other: &Cart) -> bool {
+        self.x == other.x && self.y == other.y
+    }
+
     fn turn(&mut self, track: char) {
-        match (&self.dir, track) {
-            ('<', '/') =>  { self.dir = 'v' },
-            ('>', '/') =>  { self.dir = '^' },
-            ('v', '/') =>  { self.dir = '<' },
-            ('^', '/') =>  { self.dir = '>' },
-            ('<', '\\') =>  { self.dir = '^' },
-            ('>', '\\') =>  { self.dir = 'v' },
-            ('v', '\\') =>  { self.dir = '>' },
-            ('^', '\\') =>  { self.dir = '<' },
-            (_, '+') => {
-                self.i = (self.i + 1) % 3;
-                match (&self.dir, &self.i) {
-                    ('<', 1) =>  { self.dir = 'v' },
-                    ('>', 1) =>  { self.dir = '^' },
-                    ('v', 1) =>  { self.dir = '>' },
-                    ('^', 1) =>  { self.dir = '<' },
-                    ('<', 0) =>  { self.dir = '^' },
-                    ('>', 0) =>  { self.dir = 'v' },
-                    ('v', 0) =>  { self.dir = '<' },
-                    ('^', 0) =>  { self.dir = '>' },
-                    _ => {},
-                }
-            }
-            (_, _) => { },
-        }
+        if track == '+' { self.i = (self.i + 1) % 3 }
+        self.dir = match (&self.dir, track, self.i) {
+            ('<', '/', _) =>  'v',
+            ('>', '/', _) =>  '^',
+            ('v', '/', _) =>  '<',
+            ('^', '/', _) =>  '>',
+            ('<', '\\', _) => '^',
+            ('>', '\\', _) => 'v',
+            ('v', '\\', _) => '>',
+            ('^', '\\', _) => '<',
+            ('<', '+', 1) =>  'v',
+            ('>', '+', 1) =>  '^',
+            ('v', '+', 1) =>  '>',
+            ('^', '+', 1) =>  '<',
+            ('<', '+', 0) =>  '^',
+            ('>', '+', 0) =>  'v',
+            ('v', '+', 0) =>  '<',
+            ('^', '+', 0) =>  '>',
+            _ => self.dir,
+        };
     }
 }
 
@@ -97,29 +102,36 @@ fn draw(grid: &Vec<Vec<char>>, carts: &Vec<Cart>) {
 
 fn step(grid: &Vec<Vec<char>>, carts: &mut Vec<Cart>)
         -> Option<(usize, usize)> {
-    let mut xy_carts = HashMap::new();
-    for cart in carts.iter() {
-        xy_carts.insert((cart.x, cart.y), cart.dir);
-    }
-
     carts.sort();
 
-    for cart in carts.iter_mut() {
-        let prev = (cart.x, cart.y);
-        &cart.step();
-        let pos = (cart.x, cart.y);
-        if xy_carts.contains_key(&pos) {
-            return Some((cart.x, cart.y));
+    let mut i = 0;
+    let mut collision = None;
+    'outer: loop {
+        if i >= carts.len() { break; }
+        carts[i].step();
+        let track = grid[carts[i].y][carts[i].x];
+        carts[i].turn(track);
+
+        let mut j = 0;
+        loop {
+            if j >= carts.len() { break; }
+            if i != j && carts[i].collides(&carts[j]) {
+                if collision == None {
+                    collision = Some((carts[i].x, carts[i].y));
+                }
+                carts.remove(i);
+                if j > i { j -= 1; }
+                carts.remove(j);
+                continue 'outer;
+            }
+
+            j += 1;
         }
 
-        xy_carts.remove(&prev);
-        xy_carts.insert(pos, cart.dir);
-
-        let c : char = grid[cart.y][cart.x];
-        &cart.turn(c);
+        i += 1;
     }
 
-    None
+    collision
 }
 
 pub fn run() {
@@ -131,7 +143,7 @@ pub fn run() {
     for (j, line) in input.lines().enumerate() {
         let mut tracks = vec!();
         for (i, c) in line.unwrap().chars().enumerate() {
-            let cart = Cart{id: carts.len(), x: i, y: j, dir: c, i: 0 };
+            let cart = Cart{x: i, y: j, dir: c, i: 0 };
             match c {
                 '>' => {
                     carts.push(cart);
@@ -160,4 +172,5 @@ pub fn run() {
     println!("- Part 1 -");
     part1(&grid, &mut carts);
     println!("- Part 2 -");
+    part2(&grid, &mut carts);
 }

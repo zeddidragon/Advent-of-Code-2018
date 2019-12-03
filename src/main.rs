@@ -29,8 +29,6 @@ fn main() {
     use std::env;
 
     let args: Vec<String> = env::args().collect();
-    println!("{:?}", args);
-
     let run : i8;
     if args.len() > 1 {
         run = args[1].parse().unwrap();
